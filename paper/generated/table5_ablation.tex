@@ -1,0 +1,16 @@
+\begin{tabular}{llllrrr}
+\toprule
+dataset & corr\_method & penalty\_agg & corr\_scope & accuracy & macro\_f1 & fit\_seconds \\
+\midrule
+Synthetic & pearson & mean & global & 0.800 & 0.800 & 0.085 \\
+Synthetic & pearson & min & global & 0.827 & 0.827 & 0.084 \\
+Synthetic & pearson & product & global & 0.827 & 0.827 & 0.076 \\
+Synthetic & pearson & product & node & 0.827 & 0.827 & 0.074 \\
+Synthetic & spearman & product & global & 0.827 & 0.827 & 0.078 \\
+WDBC & pearson & mean & global & 0.936 & 0.931 & 0.043 \\
+WDBC & pearson & min & global & 0.936 & 0.931 & 0.037 \\
+WDBC & pearson & product & global & 0.936 & 0.931 & 0.040 \\
+WDBC & pearson & product & node & 0.936 & 0.931 & 0.040 \\
+WDBC & spearman & product & global & 0.936 & 0.931 & 0.042 \\
+\bottomrule
+\end{tabular}

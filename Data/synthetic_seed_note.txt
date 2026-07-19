@@ -1,0 +1,1 @@
+Synthetic experiments use task seeds 42 through 51. Global reproducibility seeds are 42, 43, and 44.
