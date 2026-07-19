@@ -20,3 +20,10 @@ htmlcov/
 Thumbs.db
 
 results/_stale_*/
+
+tmp/
+paper/*.aux
+paper/*.bbl
+paper/*.blg
+paper/*.log
+*.inspect.ndjson

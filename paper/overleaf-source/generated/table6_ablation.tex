@@ -1,0 +1,16 @@
+\begin{tabular}{llllrrr}
+\toprule
+Data set & Correlation & Aggregation & Scope & Accuracy & Macro-F1 & Fit time (s) \\
+\midrule
+Synthetic & pearson & mean & global & 0.785 & 0.784 & 0.087 \\
+Synthetic & pearson & min & global & 0.796 & 0.796 & 0.085 \\
+Synthetic & pearson & product & global & 0.792 & 0.792 & 0.092 \\
+Synthetic & pearson & product & node & 0.793 & 0.792 & 0.087 \\
+Synthetic & spearman & product & global & 0.792 & 0.791 & 0.092 \\
+WDBC & pearson & mean & global & 0.935 & 0.930 & 0.033 \\
+WDBC & pearson & min & global & 0.933 & 0.929 & 0.031 \\
+WDBC & pearson & product & global & 0.933 & 0.928 & 0.031 \\
+WDBC & pearson & product & node & 0.932 & 0.927 & 0.031 \\
+WDBC & spearman & product & global & 0.937 & 0.934 & 0.033 \\
+\bottomrule
+\end{tabular}

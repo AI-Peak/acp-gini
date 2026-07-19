@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
@@ -9,14 +10,25 @@ from src.experiments.common import evaluate_dataset
 
 def main():
     datasets = load_all_real("Data"); frames=[]; stats=[]
+    requested = os.getenv("ACP_DATASETS")
+    selected_names = set(requested.split(",")) if requested else set(datasets)
     for name,(X,y,features) in datasets.items():
         stats.append({"dataset":name,"n":len(X),"d":X.shape[1],"positive_rate":float(y.mean()),
                       "pair_fraction_abs_r_gt_07":collinearity_fraction(X)})
-        frames.append(evaluate_dataset(name,X,y))
-    main = pd.concat(frames,ignore_index=True)
+        if name in selected_names:
+            frames.append(evaluate_dataset(name,X,y))
+    fresh = pd.concat(frames,ignore_index=True)
+    main_path = "results/uci_main.csv"
+    if requested and os.path.exists(main_path):
+        previous = pd.read_csv(main_path)
+        main = pd.concat([previous[~previous.dataset.isin(selected_names)], fresh], ignore_index=True)
+    else:
+        main = fresh
     pd.DataFrame(stats).to_csv("results/dataset_stats.csv",index=False)
     main.to_csv("results/uci_main.csv",index=False)
 
+    if requested and "WDBC" not in selected_names and os.path.exists("results/wdbc_error_analysis.csv"):
+        return
     X, y, _ = datasets["WDBC"]
     errors = []
     seeds = sorted(main.seed.unique())

@@ -24,8 +24,16 @@ python -m src.experiments.exp2_synthetic
 python -m src.experiments.exp3_uci
 python -m src.experiments.exp4_ablation
 python -m src.experiments.exp5_runtime
+python -m src.experiments.derive_group_metrics
+python -m src.experiments.exp6_real_sweep
 python make_tables.py
 python make_figures.py
 ```
 
 Expected full runtime is hardware-dependent and dominated by bootstrap refits; budget up to two CPU hours. All reported values originate in `results/*.csv`.
+
+## Paper and slides
+
+- Import `paper/ACP-Gini_Overleaf_Source.zip` into the official Springer LNCS Overleaf template. The project expects the template-provided `llncs.cls` and `splncs04.bst`.
+- Run `python paper/build_docx.py` to regenerate the Word report, then use LibreOffice for PDF preview/render QA.
+- The PowerPoint deck is `slides/ACP-Gini_Presentation.pptx`; its source is `slides/build_deck.mjs`.

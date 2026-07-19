@@ -22,13 +22,15 @@ def main():
                 rows.append({"rho":rho,"alpha":0,"rep":rep,"method":method,
                              **predictive_metrics(y[te], model.predict(X[te]), model.predict_proba(X[te])),
                              **synthetic_metrics(model, signals), "root_feature":model.root_feature,
-                             "n_nodes":model.n_nodes,"depth":model.depth})
+                             "n_nodes":model.n_nodes,"depth":model.depth,
+                             **{f"importance_{j}": value for j, value in enumerate(model.feature_importances_)}})
             for alpha in alphas:
                 model = make_method("ACP-Gini", alpha=alpha, max_depth=6, min_samples_leaf=5).fit(X[tr], y[tr])
                 rows.append({"rho":rho,"alpha":alpha,"rep":rep,"method":"ACP-Gini",
                              **predictive_metrics(y[te], model.predict(X[te]), model.predict_proba(X[te])),
                              **synthetic_metrics(model, signals), "root_feature":model.root_feature,
-                             "n_nodes":model.n_nodes,"depth":model.depth})
+                             "n_nodes":model.n_nodes,"depth":model.depth,
+                             **{f"importance_{j}": value for j, value in enumerate(model.feature_importances_)}})
     pd.DataFrame(rows).to_csv("results/synthetic_sweep.csv", index=False)
 
 if __name__ == "__main__": main()
