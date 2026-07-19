@@ -22,6 +22,10 @@ CITE_NUMBERS = {
         "demsar2006comparisons",
     ])
 }
+REF_NUMBERS = {
+    "fig:synthetic": "1", "fig:sensitivity": "2", "fig:redundancy": "3",
+    "fig:sweep": "4", "fig:trees": "5", "tab:stability": "6",
+}
 
 
 def set_cell_shading(cell, fill):
@@ -88,7 +92,8 @@ def clean_latex(text):
     text = re.sub(r"\\emph\{([^}]*)\}", r"\1", text)
     text = re.sub(r"\\textbf\{([^}]*)\}", r"\1", text)
     text = re.sub(r"\\text\{([^}]*)\}", r"\1", text)
-    text = re.sub(r"\\ref\{([^}]*)\}", r"\1", text)
+    text = re.sub(r"\\ref\{([^}]*)\}", lambda m: REF_NUMBERS.get(m.group(1), m.group(1)), text)
+    text = text.replace("\\sqrt{1-\\rho^2}\\epsilon", "sqrt(1-rho^2) epsilon")
     text = text.replace("``", "“").replace("''", "”")
     text = text.replace("$", "")
     text = text.replace("Cram{\\'e}r", "Cramer's").replace("Carr{\\'e}", "Carre")
@@ -98,7 +103,7 @@ def clean_latex(text):
     text = text.replace("\\%", "%").replace("\\", "")
     text = text.replace("Dem{v{s}}ar", "Demsar").replace('Ga{"e}l', "Gael")
     text = text.replace("Carr{'e}", "Carre").replace("Cram{'e}r", "Cramer's")
-    text = text.replace("{", "").replace("}", "")
+    text = text.replace("{", "").replace("}", "").replace("~", " ")
     text = re.sub(r"\s+([,.;:])", r"\1", text)
     return re.sub(r"\s+", " ", text).strip()
 
@@ -155,7 +160,10 @@ def main():
     authors.alignment = WD_ALIGN_PARAGRAPH.CENTER
     authors.paragraph_format.space_after = Pt(6)
 
-    abstract = re.search(r"\\begin\{abstract\}(.*?)\\keywords", tex, re.S).group(1)
+    abstract_match = re.search(r"\\abstract\{(.*?)\}\s*\\keywords", tex, re.S)
+    if abstract_match is None:
+        abstract_match = re.search(r"\\begin\{abstract\}(.*?)\\keywords", tex, re.S)
+    abstract = abstract_match.group(1)
     p = doc.add_paragraph()
     p.add_run("Abstract. ").bold = True
     p.add_run(clean_latex(abstract))
@@ -164,9 +172,12 @@ def main():
     p.add_run("Keywords: ").bold = True
     p.add_run(clean_latex(keywords))
 
-    body = tex[tex.index("\\section{Introduction}"):tex.index("\\bibliographystyle")]
-    body = re.sub(r"\\begin\{figure\}.*?\\end\{figure\}", "", body, flags=re.S)
-    body = re.sub(r"\\begin\{table\}.*?\\end\{table\}", "", body, flags=re.S)
+    bibliography_start = tex.find("\\bibliographystyle")
+    if bibliography_start < 0:
+        bibliography_start = tex.index("\\bibliography{")
+    body = tex[tex.index("\\section{Introduction}"):bibliography_start]
+    body = re.sub(r"\\begin\{figure\*?\}.*?\\end\{figure\*?\}", "", body, flags=re.S)
+    body = re.sub(r"\\begin\{table\*?\}.*?\\end\{table\*?\}", "", body, flags=re.S)
     body = re.sub(r"\\begin\{align\}.*?\\end\{align\}", "", body, flags=re.S)
     body = re.sub(r"\\begin\{equation\}.*?\\end\{equation\}", "", body, flags=re.S)
     body = body.replace("\\begin{itemize}", "").replace("\\end{itemize}", "")
@@ -195,6 +206,12 @@ def main():
                     doc.add_paragraph(cleaned)
 
     doc.add_heading("Generated Evidence Tables", level=1)
+    positioning = pd.DataFrame([
+        ["VIF+CART", "Yes", "Yes", "No", "No", "No"],
+        ["RRF-style", "Yes", "No", "No", "Yes", "No"],
+        ["ACP-Gini", "Yes", "Yes", "Yes", "Yes", "Yes"],
+    ], columns=["Method", "Single tree", "Correlation-aware", "Path-local", "No preprocessing", "CART-compatible at alpha=0"])
+    add_table(doc, "Related-work positioning.", positioning, [1.0, .75, 1.1, .8, 1.1, 1.45])
     stats = pd.read_csv(RESULTS / "dataset_stats.csv")
     add_table(doc, "Table 1. Data-set statistics.", stats.round(3), [1.3, .65, .55, 1.0, 1.8])
     main_frame = pd.read_csv(RESULTS / "uci_main.csv")

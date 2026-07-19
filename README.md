@@ -4,6 +4,10 @@ Reproducible implementation of an ancestor-correlation penalty for single decisi
 
 ## Setup
 
+Reference environment: Python 3.10.11 on 64-bit Microsoft Windows 11 Pro,
+AMD Ryzen 7 PRO 5850U CPU. The exact package versions are pinned in
+`requirements.txt`.
+
 ```powershell
 python -m pip install -r requirements.txt
 $env:PYTHONPATH='.'
@@ -30,10 +34,10 @@ python make_tables.py
 python make_figures.py
 ```
 
-Expected full runtime is hardware-dependent and dominated by bootstrap refits; budget up to two CPU hours. All reported values originate in `results/*.csv`.
+The complete full experiment suite took approximately **35 wall-clock minutes** on the reference machine. Runtime is dominated by the inner-CV and bootstrap refits in `exp3_uci`; budget up to two hours on a slower CPU. All reported values originate in `results/*.csv`.
 
 ## Paper and slides
 
-- Import `paper/ACP-Gini_Overleaf_Source.zip` into the official Springer LNCS Overleaf template. The project expects the template-provided `llncs.cls` and `splncs04.bst`.
+- Upload `paper/ACP-Gini_Overleaf_Source.zip` as a new Overleaf project. The archive is self-contained with `sn-jnl.cls`, `sn-basic.bst`, references, generated tables, and figures; set `ACP-Gini_Report_Springer.tex` as the main file and compile with pdfLaTeX.
 - Run `python paper/build_docx.py` to regenerate the Word report, then use LibreOffice for PDF preview/render QA.
 - The PowerPoint deck is `slides/ACP-Gini_Presentation.pptx`; its source is `slides/build_deck.mjs`.

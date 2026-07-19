@@ -24,8 +24,13 @@ def stability_metrics(trees):
         value = spearmanr(a, b).statistic
         return 0.0 if np.isnan(value) else value
     rank = _mean_pairs([t.feature_importances_ for t in trees], rank_corr)
+    top5_sets = []
+    for tree in trees:
+        importance = tree.feature_importances_
+        positive = np.flatnonzero(importance > 0)
+        top5_sets.append(set(positive[np.argsort(importance[positive])[::-1][:5]]))
     top5 = _mean_pairs(
-        [set(np.argsort(t.feature_importances_)[::-1][:5]) for t in trees],
+        top5_sets,
         lambda a, b: len(a & b) / len(a | b) if a | b else 1.0,
     )
     def multi_jaccard(a, b):

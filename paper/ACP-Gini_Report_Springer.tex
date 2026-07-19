@@ -1,29 +1,54 @@
-\documentclass[runningheads]{llncs}
+\documentclass[pdflatex,sn-basic,Numbered]{sn-jnl}
+
 \usepackage{graphicx}
-\usepackage{booktabs}
-\usepackage{amsmath}
-\usepackage{url}
 \usepackage{multirow}
-\usepackage{array}
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{url}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{geometry}
+\geometry{top=3.2cm, bottom=3.2cm, footskip=1cm}
+
 \graphicspath{{figures/}{../figures/}}
 
-\begin{document}
-\title{ACP-Gini: An Ancestor-Correlation Penalized Splitting Criterion for Multicollinearity-Robust Decision Trees}
-\titlerunning{ACP-Gini for Multicollinearity-Robust Trees}
-\author{Huynh Khang Lam \and Tuan Dat Phan \and Trong Nhan Nguyen \and Xuan Huy Nguyen}
-\authorrunning{H. K. Lam et al.}
-\institute{Artificial Intelligence, FPT University, Ho Chi Minh City, Vietnam \\
-\email{khanglhse200666@fpt.edu.vn} \\
-\email{ptundatwork@gmail.com} \\
-\email{hi.gesar@gmail.com} \\
-\email{HuyNX23@fe.edu.vn}}
-\maketitle
+\setcounter{topnumber}{4}
+\setcounter{bottomnumber}{2}
+\setcounter{totalnumber}{6}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.85}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.80}
+\setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
+\setlength{\floatsep}{8pt plus 2pt minus 2pt}
+\setlength{\intextsep}{8pt plus 2pt minus 2pt}
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.12}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\linespread{1.18}
 
-\begin{abstract}
+\raggedbottom
+
+\begin{document}
+\title[ACP-Gini for Multicollinearity-Robust Trees]{ACP-Gini: An Ancestor-Correlation Penalized Splitting Criterion for Multicollinearity-Robust Decision Trees}
+
+\author[1]{\fnm{Huynh Khang} \sur{Lam}}\email{khanglhse200666@fpt.edu.vn}
+
+\author[1]{\fnm{Tuan Dat} \sur{Phan}}\email{ptundatwork@gmail.com}
+
+\author[1]{\fnm{Trong Nhan} \sur{Nguyen}}\email{hi.gesar@gmail.com}
+
+\author[1]{\fnm{Xuan Huy} \sur{Nguyen}}\email{HuyNX23@fe.edu.vn}
+
+\affil*[1]{\orgdiv{Artificial Intelligence}, \orgname{FPT University}, \orgaddress{\city{Ho Chi Minh City}, \country{Vietnam}}}
+
+\abstract{
 Decision trees avoid coefficient-identification problems associated with linear regression, but correlated predictors can still make their selected feature sets redundant and their importance profiles difficult to interpret. We introduce ACP-Gini, a single-tree splitting criterion that multiplies each candidate's raw Gini gain by a product of correlation penalties against distinct features already used on the root-to-node path. The implementation reduces exactly to CART at $\alpha=0$, excludes self-penalties, and uses raw gain for stopping. Evaluation combines a controlled correlated-feature generator with five real binary-classification data sets, 15 repeated cross-validation folds, and 50 bootstrap refits per fold. At selected $\alpha$, ACP-Gini reduces bootstrap weighted redundancy by 12.1\% on WDBC, 29.6\% on Wine, 12.9\% on Ionosphere, and 10.8\% on Sonar, while predictive differences from CART are not statistically significant. A real-data operating sweep shows that WDBC at $\alpha=0.6$ reduces weighted redundancy by 38.5\% over three seeds with a 0.17 percentage-point accuracy change; the seed-42 five-fold result is 46.5\% with identical accuracy. Synthetic group coverage and within-group concentration increase from $\alpha=0$ to 1 at every tested correlation level, with a small rise in noise importance. Stability improves on Wine and Pima but decreases on WDBC and Sonar, revealing a stability--redundancy tradeoff rather than a uniform stability gain.
-\keywords{Decision trees \and multicollinearity \and feature redundancy \and model stability \and interpretable machine learning}
-\end{abstract}
+}
+\keywords{Decision trees, multicollinearity, feature redundancy, model stability, interpretable machine learning}
+
+\maketitle
 
 \section{Introduction}
 Decision trees are often described as ``immune'' to multicollinearity because a split uses one predictor at a time. This claim is narrower than it first appears. Trees do avoid simultaneous coefficient estimation, yet greedy induction must still choose among correlated variables with nearly interchangeable gains. Small sample changes can alter the representative chosen from a correlated block, while a single fitted tree may repeatedly use several members of the same block along different branches. Consequently, prediction can remain strong while the selected feature set is internally redundant and impurity-based importance is spread across substitutes.
@@ -31,6 +56,8 @@ Decision trees are often described as ``immune'' to multicollinearity because a 
 The distinction matters for interpretable machine learning. A model can be accurate but give a needlessly repetitive account of the evidence used for its decisions. Correlated-feature effects on variable importance are well documented for forests \cite{strobl2008conditional,nicodemus2010correlation,louppe2013importance}, while tree instability motivated resampling methods such as bagging \cite{breiman1996bagging}. For an auditable single tree, however, preprocessing by variance-inflation-factor (VIF) pruning discards variables globally, and regularized-tree methods apply feature-level penalties that do not express the pairwise relationship between a candidate and the path that leads to the current node.
 
 ACP-Gini addresses this local redundancy problem. At a node $T$, it discounts the Gini gain of candidate $X_j$ according to its absolute correlation with distinct features used by ancestors of $T$. The design retains the familiar CART induction procedure \cite{breiman1984cart,hastie2009esl}, remains exactly backward-compatible at $\alpha=0$, and leaves raw gain responsible for deciding whether an informative split exists.
+
+We evaluate four research questions. \textbf{RQ1:} Does ACP-Gini improve bootstrap stability of feature choice and importance relative to CART? \textbf{RQ2:} Does it reduce selected-set redundancy and concentrate importance on one representative per correlated group? \textbf{RQ3:} What accuracy tradeoff does $\alpha$ induce, and is the selected setting statistically distinguishable from CART? \textbf{RQ4:} How does it affect tree complexity, and how should interpretive compactness be characterized?
 
 This study makes four contributions:
 \begin{itemize}
@@ -48,7 +75,22 @@ The scope is interpretable model construction and model diagnostics, complementi
 
 \paragraph{Feature regularization and preprocessing.} Regularized Random Forest penalizes the gain of newly introduced features \cite{deng2012rrf}, and guided RRF incorporates external importance information \cite{deng2013grrf}. Our RRF-style baseline is explicitly a single-tree adaptation so that all splitting methods share one implementation. VIF pruning represents the preprocessing family; the threshold of 10 follows common practice summarized by Dormann et al. \cite{dormann2013collinearity}. Unlike global removal, ACP-Gini can retain a correlated predictor for a branch where it supplies useful conditional information.
 
-The gap is therefore specific: prior work does not inject an interpretable pairwise correlation with root-to-node ancestors into the split criterion of a single tree. ACP-Gini is not an ensemble replacement; it is a local criterion for reducing repetitive feature use while preserving the mechanics and inspectability of CART.
+To our knowledge, the gap is therefore specific: prior work does not inject an interpretable pairwise correlation with root-to-node ancestors into the split criterion of a single tree. ACP-Gini is not an ensemble replacement; it is a local criterion for reducing repetitive feature use while preserving the mechanics and inspectability of CART.
+
+\begin{table}[t]
+\centering
+\caption{Positioning of the evaluated single-tree approaches.}\label{tab:positioning}
+\scriptsize
+\begin{tabular}{lccccc}
+\toprule
+Method & Single tree & Corr.-aware & Path-local & No preproc. & CART at $\alpha=0$ \\
+\midrule
+VIF+CART  & Yes & Yes & No  & No  & No \\
+RRF-style & Yes & No  & No  & Yes & No \\
+ACP-Gini  & Yes & Yes & Yes & Yes & Yes \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Methodology}
 Let $T$ contain $n_T$ samples and let $T_L,T_R$ be a candidate split. With class proportions $p_k(T)$, Gini impurity and raw gain are
@@ -70,10 +112,12 @@ The selected candidate maximizes $(S,\Delta G,-j)$ lexicographically. Thus ties 
 
 Pearson correlation is computed once on the full training fold by default. Spearman correlation rank-transforms columns before the same calculation. Constant-column NaNs are replaced by zero correlation. A node-local ablation recomputes correlations when at least 30 samples reach the node and otherwise falls back to the global matrix. Global preprocessing costs $O(nd^2)$ once; lookup of ancestor correlations adds $O(d\,|A(T)|)$ per node beyond the threshold scan.
 
-\paragraph{Parameter selection.} Inner stratified folds evaluate $\alpha\in\{0.2,0.4,0.6,0.8,1.0\}$. Eligible values have macro-F1 within one standard deviation of the $\alpha=0$ mean, and importance rank correlation selects among eligible values. The final data-set value is the lower quartile of fold-level selections, rounded down to the grid. This conservative aggregation biases disagreements toward a weaker, more CART-like penalty, analogous in spirit to a one-standard-error rule. The RRF-style $\lambda\in\{0.5,0.7,0.9\}$ uses the upper quartile because larger $\lambda$ is the weaker penalty.
+\paragraph{Parameter selection.} Inner stratified folds evaluate $\alpha\in\{0.2,0.4,0.6,0.8,1.0\}$. Eligible values have macro-F1 within one standard deviation of the $\alpha=0$ mean, and importance rank correlation selects among eligible values. The final data-set value is the lower quartile of fold-level selections, rounded down to the grid. We treat this data-set-level value as a conservative consensus operating point aggregated from per-fold inner-CV selections. It is not a fully nested unbiased selection protocol; however, the operating sweep in Fig.~\ref{fig:sweep} shows that accuracy varies by at most approximately 0.3 percentage points on WDBC through $\alpha=.8$ and 0.2 points across the entire Wine grid. The documented WDBC $\alpha=1$ failure is outside the selected operating region. This flat practical region makes material inflation of the reported selected-setting accuracy unlikely. The RRF-style $\lambda\in\{0.5,0.7,0.9\}$ uses the upper quartile because larger $\lambda$ is the weaker penalty.
 
 \section{Experimental Setup}
 We use WDBC from scikit-learn \cite{pedregosa2011sklearn}, Wine Quality, Ionosphere, and Sonar from UCI \cite{uci2024}, and Pima Diabetes from OpenML. All are numeric binary-classification tasks. Pairwise $|r|>0.7$ occurs most frequently in WDBC and Sonar; Pima serves as a low-collinearity control. Cached CSV files accompany the code.
+
+Experiments ran with Python 3.10.11 on 64-bit Microsoft Windows 11 Pro using an AMD Ryzen 7 PRO 5850U CPU. The complete experiment suite required approximately 35 wall-clock minutes on this machine.
 
 \begin{table}[t]\centering\caption{Data-set statistics and collinearity diagnostics.}\label{tab:data}\scriptsize\input{generated/table1_datasets.tex}\end{table}
 
@@ -85,7 +129,7 @@ For a fitted tree with used set $U$, selected-set redundancy is the mean $|r_{ij
 \begin{equation}
 R_w=\frac{\sum_{i<j}I_iI_j|r_{ij}|}{\sum_{i<j}I_iI_j}.
 \end{equation}
-Both use the full-data correlation matrix for a consistent diagnostic scale and are reported for main fits and averaged bootstrap fits. Wilcoxon signed-rank tests use paired fold observations \cite{demsar2006comparisons}. Root agreement is retained in raw CSVs but omitted from headline tables because ACP-Gini is identical to CART at the root by construction.
+Both use the full-data correlation matrix for a consistent diagnostic scale and are reported for main fits and averaged bootstrap fits. The full-data correlation matrix serves exclusively as a label-free, post-hoc diagnostic scale and does not participate in model fitting or hyperparameter selection. Wilcoxon signed-rank tests use paired fold observations \cite{demsar2006comparisons}. The four ACP-Gini-versus-CART bootstrap weighted-redundancy comparisons on the collinear data sets are the primary confirmatory family; all other Wilcoxon results are exploratory or descriptive. Repeated-CV folds share training data, so their p-values are approximate; we therefore emphasize effect sizes and cross-seed consistency. Root agreement is retained in raw CSVs but omitted from headline tables because ACP-Gini is identical to CART at the root by construction.
 
 \section{Results and Discussion}
 \subsection{Correctness and Synthetic Ground Truth}
@@ -110,13 +154,13 @@ Exact-original recovery is less suitable at high $\rho$: an original and its cop
 The conservative selected values are .2 (WDBC), 1.0 (Wine), .4 (Ionosphere), .2 (Sonar), and .2 (Pima). Accuracy differences from CART are statistically indistinguishable on every data set. Sonar's direction is negative but shrinks to only .65 percentage points after lower-quartile aggregation; Ionosphere changes from .885 to .886.
 
 \begin{table}[t]\centering\caption{Selected data-set-level penalty parameters.}\label{tab:parameters}\scriptsize\input{generated/table_selected_parameters.tex}\end{table}
-\begin{table}[t]\centering\caption{Predictive results over 15 held-out folds.}\label{tab:predictive}\resizebox{\textwidth}{!}{\input{generated/table2_predictive.tex}}\end{table}
+\begin{table*}[t]\centering\caption{Predictive results over 15 held-out folds.}\label{tab:predictive}\tiny\setlength{\tabcolsep}{1.5pt}\input{generated/table2_predictive.tex}\end{table*}
 
-The primary result is lower internal correlation. Bootstrap weighted redundancy falls from .621 to .545 on WDBC (12.1\%), .183 to .128 on Wine (29.6\%), .168 to .146 on Ionosphere (12.9\%), and .218 to .195 on Sonar (10.8\%). All four reductions are significant at $p<.001$. Pima changes by only .0017 in absolute terms; despite a small p-value from repeated observations, this is no meaningful reduction and supports its role as a low-collinearity control. Figure~\ref{fig:redundancy} visualizes the comparison.
+The primary result is lower internal correlation. Bootstrap weighted redundancy falls from .621 to .545 on WDBC (12.1\%), .183 to .128 on Wine (29.6\%), .168 to .146 on Ionosphere (12.9\%), and .218 to .195 on Sonar (10.8\%). The four primary comparisons all have $p\leq .0003$ and remain significant under Holm correction at $\alpha=.05$. Pima changes by only .0017 in absolute terms; despite a small exploratory p-value from repeated observations, this is no meaningful reduction and supports its role as a low-collinearity control. Figure~\ref{fig:redundancy} visualizes the comparison.
 
 VIF+CART reaches lower WDBC redundancy (.343 versus ACP-Gini's .545) by globally deleting 13 of 30 features before training. That reduction entails irreversible information loss and a fixed feature set; ACP-Gini keeps every feature available for branch-conditional use at equal accuracy.
 
-\begin{table}[t]\centering\caption{Selected-set redundancy; lower is better.}\label{tab:redundancy}\resizebox{\textwidth}{!}{\input{generated/table3_redundancy.tex}}\end{table}
+\begin{table*}[t]\centering\caption{Selected-set redundancy; lower is better.}\label{tab:redundancy}\tiny\setlength{\tabcolsep}{1.5pt}\input{generated/table3_redundancy.tex}\end{table*}
 
 \begin{figure}[t]
 \centering\includegraphics[width=.9\textwidth]{fig4_redundancy.pdf}
@@ -133,14 +177,20 @@ The operating sweep in Fig.~\ref{fig:sweep} separates a conservative default fro
 \subsection{The Stability--Redundancy Tradeoff}
 Importance rank correlation rises by .179 on Wine and .017 on Pima; top-five Jaccard rises by .069 and .010, respectively. Wine's gains are significant at $p=.0001$. Conversely, rank stability decreases by .057 on WDBC and .040 on Sonar, with smaller negative changes on Ionosphere. Table~\ref{tab:stability} shows this conditional pattern.
 
-\begin{table}[!htbp]\centering\caption{Bootstrap stability metrics.}\label{tab:stability}\resizebox{.68\textwidth}{!}{\input{generated/table4_stability.tex}}\end{table}
+\begin{table*}[!htbp]\centering\caption{Bootstrap stability metrics.}\label{tab:stability}\tiny\setlength{\tabcolsep}{1.5pt}\input{generated/table4_stability.tex}\end{table*}
 
 This is not equivalent to predictive failure. CART's apparent stability can arise from repeatedly selecting the same correlated block, whereas ACP-Gini deliberately diversifies downstream evidence. Lower redundancy and higher cross-bootstrap rank agreement are distinct goals. ACP-Gini improves both where redundant choice drives instability (Wine), but trades rank consistency for less correlated feature use in block-correlated WDBC and Sonar.
 
 \subsection{Ablation, Runtime, and Qualitative Analysis}
 The ablation does not identify a universally dominant configuration. Spearman obtains the highest WDBC accuracy (.937), while Pearson-min is strongest on synthetic accuracy (.796); product-Pearson-global remains the simplest pre-specified default. Global-scope runtime ranges from .85 to 1.33 times CART across data sets, and node-local scope from .84 to 1.44 times. The overhead is data dependent and is not uniformly below 10\%.
 
+\begin{table*}[t]\centering\caption{Correlation, aggregation, and scope ablation.}\label{tab:ablation}\tiny\setlength{\tabcolsep}{2pt}\input{generated/table6_ablation.tex}\end{table*}
+
+\begin{table}[t]\centering\caption{Measured fit time by data set and method.}\label{tab:runtime}\scriptsize\setlength{\tabcolsep}{3pt}\input{generated/table7_runtime.tex}\end{table}
+
 Figure~\ref{fig:trees} illustrates that the WDBC root and left branch remain identical, while the right child changes from mean texture to texture error under ACP-Gini. Average node counts remain comparable because raw-gain stopping preserves informative splitting: for example, WDBC uses 24.2 nodes for ACP-Gini and 24.7 for CART.
+
+\begin{table}[t]\centering\caption{Tree complexity at the selected operating points.}\label{tab:complexity}\scriptsize\setlength{\tabcolsep}{3pt}\input{generated/table5_complexity.tex}\end{table}
 
 \begin{figure}[!htbp]
 \centering\includegraphics[width=.72\textwidth]{fig5_tree_comparison.pdf}
@@ -156,6 +206,5 @@ Across the WDBC repeated folds, CART and ACP-Gini disagree on 65 predictions. CA
 \section{Conclusion}
 ACP-Gini introduces an interpretable path-dependent correlation penalty while preserving CART behavior at $\alpha=0$, repeated-feature splitting, and raw-gain stopping. The strongest evidence concerns redundancy rather than a uniform stability gain: selected feature sets are less internally correlated on four collinear real data sets without statistically significant predictive loss, and synthetic group-level recovery improves across all tested correlation endpoints. Stability depends on data structure, yielding an informative stability--redundancy tradeoff. Future work should study theoretical conditions for beneficial penalties, categorical association, regression trees, and ensemble variants.
 
-\bibliographystyle{splncs04}
 \bibliography{references}
 \end{document}
