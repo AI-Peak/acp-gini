@@ -20,12 +20,56 @@ HEADER_MAP={
     "pair_fraction_abs_r_gt_07":"Pairs with $|r|>0.7$",
 }
 
+def bold_frame(df):
+    df = df.copy()
+    dataset_col = 'dataset' if 'dataset' in df.columns else 'Data set' if 'Data set' in df.columns else None
+    method_col = 'method' if 'method' in df.columns else 'Method' if 'Method' in df.columns else None
+    
+    if not dataset_col or not method_col:
+        return df
+        
+    higher_better = [
+        'Accuracy (mean)', 'Macro-F1 (mean)', 'AUC (mean)',
+        'Feature-set Jaccard', 'Top-5 Jaccard', 'Importance rank corr.'
+    ]
+    lower_better = [
+        'Set red. (main)', 'Weighted red. (main)', 'Set red. (boot.)', 'Weighted red. (boot.)',
+        'Split-comp. distance', 'Nodes', 'Depth', 'Fit time (s) (mean)'
+    ]
+    
+    for col in df.columns:
+        if col not in [dataset_col, method_col] and pd.api.types.is_numeric_dtype(df[col]):
+            orig_vals = df[col].copy()
+            df[col] = df[col].map(lambda x: f"{x:.3f}" if pd.notnull(x) else "")
+            
+            for ds in df[dataset_col].unique():
+                ds_rows = df[df[dataset_col] == ds]
+                acp_idx_list = ds_rows[ds_rows[method_col] == 'ACP-Gini'].index
+                cart_rows = ds_rows[ds_rows[method_col] == 'CART']
+                
+                if len(acp_idx_list) == 1 and len(cart_rows) == 1:
+                    acp_idx = acp_idx_list[0]
+                    acp_val = orig_vals.loc[acp_idx]
+                    cart_val = orig_vals.loc[cart_rows.index[0]]
+                    
+                    if pd.notnull(acp_val) and pd.notnull(cart_val):
+                        is_better = False
+                        if col in higher_better and acp_val > cart_val:
+                            is_better = True
+                        elif col in lower_better and acp_val < cart_val:
+                            is_better = True
+                            
+                        if is_better:
+                            df.loc[acp_idx, col] = f"\\textbf{{{df.loc[acp_idx, col]}}}"
+    return df
+
 def latex(frame,path,index=False):
     if isinstance(frame.columns,pd.MultiIndex):
         frame=frame.copy()
         frame.columns=[HEADER_MAP.get(a,a) if not b else f"{HEADER_MAP.get(a,a)} ({'mean' if b=='mean' else 'std.' if b=='std' else b})" for a,b in frame.columns]
     else:
         frame=frame.rename(columns=HEADER_MAP)
+    frame = bold_frame(frame)
     path.write_text(frame.to_latex(index=index,float_format=lambda x:f"{x:.3f}",escape=False),encoding="utf-8")
 
 stats=pd.read_csv("results/dataset_stats.csv")
@@ -44,6 +88,9 @@ if Path("results/real_alpha_sweep.csv").exists():
     latex(sweep_summary,OUT/"table_real_alpha_sweep.tex")
 latex(pd.read_csv("results/ablation.csv").groupby(["dataset","corr_method","penalty_agg","corr_scope"])[["accuracy","macro_f1","fit_seconds"]].mean().reset_index(),OUT/"table6_ablation.tex")
 latex(pd.read_csv("results/runtime.csv").groupby(["dataset","method"]).fit_seconds.agg(["mean","std"]).reset_index(),OUT/"table7_runtime.tex")
+if Path("results/wdbc_split_trace.csv").exists():
+    trace_df = pd.read_csv("results/wdbc_split_trace.csv")
+    latex(trace_df, OUT/"table8_case_study.tex")
 
 tests=[]
 for dataset in main.dataset.unique():
