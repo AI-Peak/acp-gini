@@ -1,2 +1,0 @@
-"""ACP-Gini research implementation."""
-

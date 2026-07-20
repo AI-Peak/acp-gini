@@ -82,7 +82,7 @@ We evaluate our method on five real-world binary classification datasets and a c
 
 In addition to real-world datasets, we generate synthetic data to establish ground-truth performance on correlated feature groups. The synthetic data contain five independent Gaussian signals with weights of 1.0, 0.8, 0.6, 0.4, and 0.2. For each signal, we generate three correlated copies, calculated as $\rho Z + \sqrt{1 - \rho^2}\epsilon$, where $\rho \in \{0.7, 0.8, 0.9, 0.95, 0.99\}$ represents the correlation level, $Z$ is the signal, and $\epsilon$ is independent Gaussian noise. We also append five pure noise features to assess model behavior on irrelevant inputs.
 
-\begin{table}[t]\centering\caption{Data-set statistics and collinearity diagnostics.}\label{tab:data}\scriptsize\input{generated/table1_datasets.tex}\end{table}
+\begin{table}[!ht]\centering\caption{Data-set statistics and collinearity diagnostics.}\label{tab:data}\scriptsize\input{generated/table1_datasets.tex}\end{table}
 
 \subsection{Proposed Methods}
 The core proposed method, ACP-Gini, modifies the standard CART splitting criterion by penalizing candidates that are correlated with features already chosen on the path leading to the current node. Let $T$ be a node containing $n_T$ samples, and let $T_L$ and $T_R$ represent the left and right child nodes for a candidate split. With class proportions $p_k(T)$, the standard Gini impurity $G(T)$ and raw impurity decrease (or raw gain) $\Delta G(X_j,t)$ are defined as:
