@@ -210,6 +210,17 @@ class ACPGiniTreeClassifier:
         walk(self._root)
         return found
 
+    def leaf_paths(self):
+        """Return (features on the root-to-leaf path, training samples at the leaf) per leaf."""
+        paths = []
+        def walk(node, trail):
+            if node.feature is None:
+                paths.append((tuple(trail), node.n_samples))
+            else:
+                walk(node.left, trail + [node.feature]); walk(node.right, trail + [node.feature])
+        walk(self._root, [])
+        return paths
+
     def split_composition(self):
         result = Counter()
         def walk(node):

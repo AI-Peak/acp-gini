@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "skills": {
+    "nature-figure": {
+      "source": "Yuan1z0825/nature-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nature-figure/SKILL.md",
+      "computedHash": "15bc19b36b00f76b1bd5da6859c9ef07db2cc1bc81b22c5f8526a1daa9b67db8"
+    },
+    "nature-polishing": {
+      "source": "Yuan1z0825/nature-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nature-polishing/SKILL.md",
+      "computedHash": "0ccc367104bf51d472037ed14781f63bae7597539e52a698b49e16fdbef0009d"
+    },
+    "nature-reviewer": {
+      "source": "Yuan1z0825/nature-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nature-reviewer/SKILL.md",
+      "computedHash": "3ad7d88f9d26b16799e26b362223c4a232276d3e8639a5d6aac7c2f02f3400d1"
+    },
+    "nature-shared": {
+      "source": "Yuan1z0825/nature-skills",
+      "sourceType": "github",
+      "skillPath": "skills/nature-shared/SKILL.md",
+      "computedHash": "7ca4e9e178f7ef98686b800d3bdf06c7fec8e2a71117b9070f0e12192d97ce01"
+    }
+  }
+}

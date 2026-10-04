@@ -1,29 +1,54 @@
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
 .venv/
 venv/
 env/
 .env
 .env.*
-
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.ipynb_checkpoints/
 .coverage
 htmlcov/
+*.egg-info/
 
+# Editors and OS
 .idea/
 .vscode/
 .DS_Store
 Thumbs.db
+desktop.ini
 
-results/_stale_*/
+# Local agent tooling (reinstall from skills-lock.json)
+.claude/
 
-tmp/
+# LaTeX build artefacts (the compiled PDF is kept)
 paper/*.aux
 paper/*.bbl
 paper/*.blg
 paper/*.log
+paper/*.out
+paper/*.toc
+paper/*.fls
+paper/*.fdb_latexmk
+paper/*.synctex.gz
+paper/*.lof
+paper/*.lot
+paper/*.run.xml
+paper/*-blx.bib
+paper/*.inspect.ndjson
 *.inspect.ndjson
+
+# Scratch, logs, archives, stale outputs
+tmp/
+results_logs/
+*.log
+nohup.out
+*.zip
+*.alignment.json
+*.alignment.svg
+results/_stale_*/
+SE*_*/
