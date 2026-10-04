@@ -2,7 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import load_breast_cancer, load_diabetes, load_digits, load_wine
 
 RANDOM_STATE = 42
 
@@ -52,7 +52,21 @@ def load_uci(dataset_id, name, data_dir="Data", target_transform=None):
     return _cache(name, X.to_numpy(), np.asarray(y), X.columns, data_dir)
 
 
-def load_all_real(data_dir="Data"):
+def load_extra(data_dir="Data"):
+    """Three scikit-learn bundled datasets, binarized (no download needed)."""
+    out = {}
+    ds = load_diabetes()  # classic multicollinear design (s1/s2 r=0.90); target above median
+    out["Diabetes"] = _cache("diabetes", ds.data, (ds.target > np.median(ds.target)).astype(int), ds.feature_names, data_dir)
+    ds = load_wine()  # cultivar 0 versus the other two
+    out["Cultivar"] = _cache("cultivar", ds.data, (ds.target == 0).astype(int), ds.feature_names, data_dir)
+    ds = load_digits()  # confusable pair 3 versus 8; constant pixels dropped
+    keep = np.isin(ds.target, [3, 8]); Xd = ds.data[keep]; Xd = Xd[:, Xd.std(axis=0) > 0]
+    names = [f"pixel_{i}" for i in np.flatnonzero(ds.data[keep].std(axis=0) > 0)]
+    out["Digits38"] = _cache("digits38", Xd, (ds.target[keep] == 8).astype(int), names, data_dir)
+    return out
+
+
+def load_all_real(data_dir="Data", extra=True):
     datasets = {"WDBC": load_wdbc(data_dir)}
     specs = [
         (186, "Wine", lambda y: (pd.to_numeric(y) >= 6).astype(int)),
@@ -70,6 +84,8 @@ def load_all_real(data_dir="Data"):
         X = ds.data.apply(pd.to_numeric, errors="coerce").fillna(0)
         y = (ds.target.astype(str) == "tested_positive").astype(int)
         datasets["Pima"] = _cache("pima", X.to_numpy(), y, X.columns, data_dir)
+    if extra:
+        datasets.update(load_extra(data_dir))
     return datasets
 
 
