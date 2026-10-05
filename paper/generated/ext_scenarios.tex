@@ -1,0 +1,12 @@
+\begin{tabular}{lccccc}
+\toprule
+Method & S1 conc. & S1 acc. & S2 right (0.7) & S2 right (0.8) & S2 acc. (0.8) \\
+\midrule
+CART & 0.669 & 0.795 & 0.911 & 0.908 & 0.924 \\
+ACP-Gini (path-local) & 0.711 & \textbf{0.796} & \textbf{0.912} & 0.907 & \textbf{0.924} \\
+Correlation penalty, tree-global & 1.000 & 0.793 & 0.898 & 0.889 & 0.920 \\
+ACP-Gini (node-local scope) & 0.739 & 0.796 & 0.910 & 0.907 & 0.924 \\
+VIF+CART & 0.638 & 0.758 & 0.911 & 0.908 & 0.924 \\
+Cluster+CART & 0.973 & 0.793 & 0.892 & 0.769 & 0.897 \\
+\bottomrule
+\end{tabular}

@@ -24,9 +24,6 @@ for label,g in [("CART",cart),("RRF-style",rrf),("ACP-Gini (selected)",best)]:
     q=g.groupby("rho").agg(coverage=("group_coverage","mean"),concentration=("group_concentration","mean")).reset_index()
     axes[0].plot(q.rho,q.coverage,marker="o",label=label); axes[1].plot(q.rho,q.concentration,marker="o",label=label)
 axes[0].set(xlabel="Correlation rho",ylabel="Group coverage"); axes[1].set(xlabel="Correlation rho",ylabel="Group concentration"); axes[0].legend(fontsize=8); fig.tight_layout(); fig.savefig(OUT/"fig2_synthetic.png",dpi=300); fig.savefig(OUT/"fig2_synthetic.pdf")
-block=syn[(syn.method=="ACP-Gini") & (syn.rho==.9)]
-sens=block.groupby("alpha")[["accuracy","group_coverage","group_concentration","noise_importance"]].mean()
-fig,axes=plt.subplots(1,2,figsize=(9,3.6)); sens[["accuracy","group_coverage","group_concentration"]].plot(marker="o",ax=axes[0]); sens[["noise_importance"]].plot(marker="o",ax=axes[1],color="#c44e52"); axes[0].set(xlabel="Alpha",ylabel="Mean metric"); axes[1].set(xlabel="Alpha",ylabel="Noise importance"); fig.tight_layout(); fig.savefig(OUT/"fig3_sensitivity.png",dpi=300); fig.savefig(OUT/"fig3_sensitivity.pdf")
 main=pd.read_csv("results/uci_main.csv")
 
 X,y,names=load_wdbc("Data")

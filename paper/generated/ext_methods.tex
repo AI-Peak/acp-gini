@@ -1,0 +1,12 @@
+\begin{tabular}{lccccccc}
+\toprule
+Method & Acc. & F1 & AUC & $R_w$ & Path $|r|$ & Rank corr. & Group corr. \\
+\midrule
+CART & 0.844 & 0.807 & 0.855 & 0.342 & 0.314 & 0.370 & 0.528 \\
+VIF+CART & 0.840 & 0.802 & 0.855 & 0.292 & 0.277 & 0.456 & 0.496 \\
+Cluster+CART & 0.840 & 0.802 & 0.856 & 0.304 & 0.279 & 0.395 & 0.480 \\
+RRF-style & 0.842 & 0.805 & 0.854 & 0.337 & 0.305 & 0.361 & 0.527 \\
+ACP-Gini & 0.843 & 0.807 & 0.854 & 0.293 & \textbf{0.259} & 0.375 & 0.489 \\
+ACP-Gini (nested) & 0.840 & 0.803 & 0.855 & \textbf{0.271} & \textbf{0.237} & 0.377 & 0.483 \\
+\bottomrule
+\end{tabular}

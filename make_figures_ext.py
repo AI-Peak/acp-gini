@@ -1,4 +1,4 @@
-"""Figures 7-10: inference forest plot, path-level correlation mass, depth sensitivity and
+"""Figures 7, 8 and 10: inference forest plot, path-level correlation mass and
 the accuracy-redundancy operating curves for all eight datasets. Figure style follows the
 publication rcParams used across the project (7 pt sans-serif, editable PDF text)."""
 from pathlib import Path
@@ -51,7 +51,7 @@ def forest(ax, metric, scale, xlabel, relative=False):
 
 
 # Figure 7: forest plot of ACP-Gini minus CART with Nadeau-Bengio 95% intervals
-fig, axes = plt.subplots(1, 3, figsize=(183 * MM, 70 * MM), sharey=True, gridspec_kw={"wspace": 0.08})
+fig, axes = plt.subplots(1, 3, figsize=(183 * MM, 92 * MM), sharey=True, gridspec_kw={"wspace": 0.08})
 labels = forest(axes[0], "bootstrap_weighted_redundancy", 100, "Weighted redundancy change (%)", relative=True)
 axes[0].set_yticklabels(labels)
 forest(axes[1], "accuracy", 100, "Accuracy difference (percentage points)")
@@ -61,7 +61,7 @@ for ax, t in zip(axes, "abc"):
 axes[0].set_ylabel("Data set (share of pairs with |r| > 0.7)")
 for ax in axes[1:]:
     ax.tick_params(labelleft=False)
-axes[0].text(0.02, -0.28, "Filled markers, Holm-adjusted p < 0.05 (corrected resampled t-test).\nBars, 95% intervals over 15 held-out folds.",
+axes[0].text(0.02, -0.2, "Filled markers, Holm-adjusted p < 0.05 (corrected resampled t-test).\nBars, 95% intervals over 15 held-out folds.",
              transform=axes[0].transAxes, fontsize=6, color="#444", va="top")
 save(fig, "fig7_forest")
 
@@ -70,7 +70,7 @@ bands = pd.read_csv("results/path_band_mass.csv").groupby(["dataset", "method"])
 cols = ["band_0_0.3", "band_0.3_0.5", "band_0.5_0.7", "band_0.7_1"]
 names = ["|r| < 0.3", "0.3 to 0.5", "0.5 to 0.7", "|r| ≥ 0.7"]
 colors = ["#d9e4ea", "#9dbccb", "#e0a458", RED]
-fig, ax = plt.subplots(figsize=(183 * MM, 62 * MM))
+fig, ax = plt.subplots(figsize=(183 * MM, 64 * MM))
 width = 0.36
 for k, d in enumerate(ORDER):
     for off, m, hatch in [(-width / 2 - 0.01, "CART", ""), (width / 2 + 0.01, "ACP-Gini", "")]:
@@ -81,52 +81,33 @@ for k, d in enumerate(ORDER):
                    label=lab if (k == 0 and m == "CART") else None)
             bottom += v
         ax.text(k + off, 1.015, "C" if m == "CART" else "A", ha="center", va="bottom", fontsize=6, color="#333")
-ax.set_xticks(range(len(ORDER))); ax.set_xticklabels([LABEL[d].replace(" (", "\n(") for d in ORDER])
+ax.set_xticks(range(len(ORDER))); ax.set_xticklabels([LABEL[d].replace(" (", "\n(") for d in ORDER], fontsize=5.5)
 ax.set_ylabel("Share of path feature-pair mass"); ax.set_ylim(0, 1.08)
 ax.legend(ncol=4, loc="lower center", bbox_to_anchor=(0.5, 1.07), title=None, columnspacing=1.2, handlelength=1.2)
 ax.text(1.0, -0.30, "C, CART; A, ACP-Gini. Pair mass is weighted by training samples at each leaf; means over 15 folds.",
         transform=ax.transAxes, ha="right", fontsize=6, color="#444")
 save(fig, "fig8_path_mass")
 
-# Figure 9: depth-cap sensitivity
-d = pd.read_csv("results/depth_sensitivity.csv")
-g = d.groupby(["dataset", "depth_cap", "method"])[["accuracy", "weighted_redundancy"]].mean().unstack("method")
-dacc = (g["accuracy"]["ACP-Gini"] - g["accuracy"]["CART"]) * 100
-rred = (g["weighted_redundancy"]["ACP-Gini"] / g["weighted_redundancy"]["CART"] - 1) * 100
-palette = plt.get_cmap("tab10")
-fig, axes = plt.subplots(1, 2, figsize=(183 * MM, 62 * MM), gridspec_kw={"wspace": 0.28})
-for i, ds in enumerate(ORDER):
-    for ax, series in zip(axes, [rred, dacc]):
-        s = series.xs(ds, level="dataset")
-        ax.plot(s.index, s.values, marker="o", ms=3, lw=1, color=palette(i), label=ds)
-for ax, yl, t in zip(axes, ["Weighted redundancy change (%)", "Accuracy change (percentage points)"], "ab"):
-    ax.axhline(0, color="#444", lw=0.8); ax.set_xlabel("Maximum tree depth"); ax.set_ylabel(yl)
-    ax.set_xticks([3, 4, 6, 8, 10]); panel_label(ax, t)
-axes[1].legend(ncol=2, loc="upper left", bbox_to_anchor=(1.02, 1.02), handlelength=1.2)
-save(fig, "fig9_depth")
-
-# Figure 10: operating curves for all eight data sets (mean over 15 folds)
-sw = pd.read_csv("results/real_alpha_sweep.csv")
-q = sw.groupby(["dataset", "alpha"])[["accuracy", "weighted_redundancy"]].mean().reset_index()
-sel = pd.read_csv("results/uci_main.csv").query("method=='ACP-Gini'").groupby("dataset").selected_alpha.first()
-fig, axes = plt.subplots(2, 4, figsize=(183 * MM, 88 * MM), sharey=True, gridspec_kw={"hspace": 0.62, "wspace": 0.12})
-for ax, ds in zip(axes.ravel(), ORDER):
-    s = q[q.dataset == ds]
-    base_r = float(s[s.alpha == 0].weighted_redundancy.iloc[0]); base_a = float(s[s.alpha == 0].accuracy.iloc[0])
-    ax.plot((s.weighted_redundancy / base_r - 1) * 100, (s.accuracy - base_a) * 100, "-", color=GREY, lw=0.9, zorder=1)
-    ax.scatter((s.weighted_redundancy / base_r - 1) * 100, (s.accuracy - base_a) * 100, s=14, color=BLUE, zorder=2)
-    a = float(sel[ds]); r = s[np.isclose(s.alpha, a)].iloc[0]
-    ax.scatter([(r.weighted_redundancy / base_r - 1) * 100], [(r.accuracy - base_a) * 100], s=34, facecolor="none",
-               edgecolor=RED, lw=1.1, zorder=3)
-    ax.axhline(0, color="#444", lw=0.6); ax.axvline(0, color="#444", lw=0.6)
-    ax.set_title(ds, fontsize=7, fontweight="bold", pad=3)
-for ax in axes[-1]:
-    ax.set_xlabel("Redundancy change (%)")
-for ax in axes[:, 0]:
-    ax.set_ylabel("Accuracy change (pp)")
-axes[0, 0].set_ylim(-4.6, 1.3)
-fig.text(0.5, -0.04, "Each point is one alpha in {0.2,...,1.0} relative to alpha = 0 (CART); red ring marks the selected alpha.",
-         ha="center", fontsize=6, color="#444")
+# Figure 10: how alpha moves redundancy, accuracy and stability (15 folds, 20 bootstrap refits per fold and alpha)
+tr = pd.read_csv("results/alpha_tradeoff.csv")
+g = tr.groupby(["dataset", "alpha"])[["accuracy", "bootstrap_weighted_redundancy", "importance_rank_corr"]].mean().reset_index()
+base = g[g.alpha == 0].set_index("dataset")
+g["d_red"] = (g.bootstrap_weighted_redundancy.values / base.loc[g.dataset, "bootstrap_weighted_redundancy"].values - 1) * 100
+g["d_acc"] = (g.accuracy.values - base.loc[g.dataset, "accuracy"].values) * 100
+g["d_rank"] = g.importance_rank_corr.values - base.loc[g.dataset, "importance_rank_corr"].values
+fig, axes = plt.subplots(1, 3, figsize=(183 * MM, 58 * MM), gridspec_kw={"wspace": 0.38})
+for ax, col, yl, t_ in zip(axes, ["d_red", "d_acc", "d_rank"],
+                           ["Importance-weighted redundancy change (%)", "Accuracy change (pp)", "Importance rank correlation change"], "abc"):
+    for ds, sub in g.groupby("dataset"):
+        ax.plot(sub.alpha, sub[col], color="#c9ced6", lw=0.8, zorder=1)
+    for ds, colr in [("WDBC", RED), ("Parkinsons", TEAL), ("Landsat", "#e0a458"), ("Ozone", "#7b5ea7")]:
+        sub = g[g.dataset == ds]
+        ax.plot(sub.alpha, sub[col], color=colr, lw=1.1, label=ds, zorder=2)
+    mean = g.groupby("alpha")[col].mean()
+    ax.plot(mean.index, mean.values, color=BLUE, lw=2.0, marker="o", ms=3, label="Mean of 12", zorder=3)
+    ax.axhline(0, color="#444", lw=0.6)
+    ax.set_xlabel("Alpha"); ax.set_ylabel(yl); panel_label(ax, t_)
+axes[2].legend(loc="lower left", fontsize=6)
 save(fig, "fig10_operating_curves")
 
 paper_dir = Path("paper/figures"); paper_dir.mkdir(parents=True, exist_ok=True)

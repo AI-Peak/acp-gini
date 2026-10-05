@@ -6,19 +6,27 @@ OUT = Path("paper/generated"); OUT.mkdir(parents=True, exist_ok=True)
 
 HEADER_MAP = {"dataset": "Data set", "selected_alpha": "$\\alpha$", "selected_rrf_lambda": "$\\lambda$",
               "n": "Samples", "d": "Features", "positive_rate": "Positive rate",
-              "pair_fraction_abs_r_gt_07": "Pairs with $|r|>0.7$"}
+              "pair_fraction_abs_r_gt_07": "Pairs $|r|>0.7$"}
 
 
-def latex(frame, path):
-    path.write_text(frame.rename(columns=HEADER_MAP).to_latex(index=False, float_format=lambda x: f"{x:.3f}", escape=False),
+def latex(frame, path, float_format=lambda x: f"{x:.3f}"):
+    path.write_text(frame.rename(columns=HEADER_MAP).to_latex(index=False, float_format=float_format, escape=False),
                     encoding="utf-8")
 
 
-latex(pd.read_csv("results/dataset_stats.csv"), OUT / "table1_datasets.tex")
 main = pd.read_csv("results/uci_main.csv")
-latex(main.groupby("dataset")[["selected_alpha", "selected_rrf_lambda"]].first().reset_index(), OUT / "table_selected_parameters.tex")
+params = main.groupby("dataset")[["selected_alpha", "selected_rrf_lambda"]].first().reset_index()
+stats = pd.read_csv("results/dataset_stats.csv").merge(params, on="dataset")
+latex(stats, OUT / "table1_datasets.tex")
+
+# Case study: the candidate that ACP-Gini selects (ACP rank 1) is set in bold.
 trace = pd.read_csv("results/wdbc_split_trace.csv")
-(OUT / "table8_case_study.tex").write_text(trace.to_latex(index=False, float_format=lambda x: f"{x:.4f}", escape=False), encoding="utf-8")
+bold = trace["ACP Rank"] == 1
+trace = trace.astype(object)
+for col in trace.columns:
+    trace[col] = [f"\\textbf{{{v:.4f}}}" if b and isinstance(v, float) else (f"\\textbf{{{v}}}" if b else (f"{v:.4f}" if isinstance(v, float) else v))
+                  for v, b in zip(trace[col], bold)]
+(OUT / "table8_case_study.tex").write_text(trace.to_latex(index=False, escape=False), encoding="utf-8")
 
 # Secondary check: paired Wilcoxon tests (the primary tests are in src/experiments/analyze_stats.py).
 METRICS = ["accuracy", "macro_f1", "auc", "feature_set_jaccard", "top5_jaccard", "importance_rank_corr", "structural_distance",

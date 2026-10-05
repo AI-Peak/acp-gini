@@ -66,7 +66,43 @@ def load_extra(data_dir="Data"):
     return out
 
 
-def load_all_real(data_dir="Data", extra=True):
+def _read_cached(name, data_dir):
+    frame = pd.read_csv(Path(data_dir) / f"{name}.csv")
+    return frame.drop(columns="target").to_numpy(float), frame.target.to_numpy(), list(frame.columns[:-1])
+
+
+def load_strong(data_dir="Data"):
+    """Four UCI data sets with strongly correlated predictors (share of pairs with |r|>0.7 between 8% and 44%).
+    Downloaded once from the UCI repository and cached as CSV in Data/."""
+    out = {}
+    cache = {"Parkinsons": "parkinsons", "Musk1": "musk1", "Landsat": "landsat", "Ozone": "ozone8"}
+    if all((Path(data_dir) / f"{f}.csv").exists() for f in cache.values()):
+        return {name: _read_cached(f, data_dir) for name, f in cache.items()}
+    from ucimlrepo import fetch_ucirepo
+    ds = fetch_ucirepo(id=174)  # Parkinsons: voice recordings, status = Parkinson's disease
+    X = ds.data.features.apply(pd.to_numeric)
+    _cache("parkinsons", X.to_numpy(), ds.data.targets.iloc[:, 0].to_numpy(), X.columns, data_dir)
+    ds = fetch_ucirepo(id=74)  # Musk version 1: 166 conformation descriptors, class = musk
+    X = ds.data.features.drop(columns=["molecule_name", "conformation_name"]).apply(pd.to_numeric)
+    _cache("musk1", X.to_numpy(), ds.data.targets.iloc[:, 0].astype(int).to_numpy(), X.columns, data_dir)
+    ds = fetch_ucirepo(id=146)  # Statlog Landsat Satellite: class 1 (red soil) against the other five classes
+    X = ds.data.features.apply(pd.to_numeric)
+    _cache("landsat", X.to_numpy(), (ds.data.targets.iloc[:, 0].to_numpy() == 1).astype(int), X.columns, data_dir)
+    # Ozone level detection: the eight-hour task only (the packaged data set mixes the one-hour and eight-hour files)
+    import io
+    import urllib.request
+    import zipfile
+    url = "https://archive.ics.uci.edu/static/public/172/ozone+level+detection.zip"
+    with zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(url, timeout=120).read())) as z:
+        raw = pd.read_csv(z.open("eighthr.data"), header=None, na_values="?")
+    X = raw.iloc[:, 1:-1].astype(float)
+    X = X.fillna(X.median())
+    X.columns = [f"f{i}" for i in range(X.shape[1])]
+    _cache("ozone8", X.to_numpy(), raw.iloc[:, -1].astype(int).to_numpy(), X.columns, data_dir)
+    return {name: _read_cached(f, data_dir) for name, f in cache.items()}
+
+
+def load_all_real(data_dir="Data", extra=True, strong=True):
     datasets = {"WDBC": load_wdbc(data_dir)}
     specs = [
         (186, "Wine", lambda y: (pd.to_numeric(y) >= 6).astype(int)),
@@ -86,6 +122,8 @@ def load_all_real(data_dir="Data", extra=True):
         datasets["Pima"] = _cache("pima", X.to_numpy(), y, X.columns, data_dir)
     if extra:
         datasets.update(load_extra(data_dir))
+    if strong:
+        datasets.update(load_strong(data_dir))
     return datasets
 
 
