@@ -1,6 +1,5 @@
 """Extended evidence: path-level redundancy, group-level stability, a truly nested
-ACP-Gini (alpha chosen per fold on training data only), a Cluster+CART baseline and a
-random-forest accuracy reference. Splits, bootstrap seeds and selected alphas replicate
+ACP-Gini (alpha chosen per fold on training data only) and a Cluster+CART baseline. Splits, bootstrap seeds and selected alphas replicate
 exp3_uci exactly so every row is paired with results/uci_main.csv.
 """
 import os
@@ -10,7 +9,6 @@ from joblib import Parallel, delayed
 from scipy.cluster.hierarchy import fcluster, linkage
 from scipy.spatial.distance import squareform
 from scipy.stats import spearmanr
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import StratifiedKFold
 
 from src.baselines import make_method
@@ -90,9 +88,6 @@ def run_fold(name, X, y, main, seed, fold, train, test, B, corr, groups):
         row["bootstrap_weighted_redundancy"] = float(np.mean([r["weighted_redundancy"] for r in boot_red]))
         row.update(stability_metrics(trees))
         rows.append(row)
-    rf = RandomForestClassifier(100, max_depth=6, min_samples_leaf=5, random_state=seed, n_jobs=1).fit(X[train], y[train])
-    rows.append({"dataset": name, "method": "RandomForest (reference)", "seed": seed, "fold": fold,
-                 **predictive_metrics(y[test], rf.predict(X[test]), rf.predict_proba(X[test]))})
     return rows
 
 

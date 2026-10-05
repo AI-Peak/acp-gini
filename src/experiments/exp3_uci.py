@@ -18,6 +18,10 @@ def main():
         if name in selected_names:
             frames.append(evaluate_dataset(name,X,y))
     fresh = pd.concat(frames,ignore_index=True)
+    part = os.getenv("ACP_PART")
+    if part:  # parallel runs: write only this part; merge_parts.py combines them
+        fresh.to_csv(f"results/_part_{part}.csv", index=False)
+        return
     main_path = "results/uci_main.csv"
     if requested and os.path.exists(main_path):
         previous = pd.read_csv(main_path)

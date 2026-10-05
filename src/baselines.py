@@ -18,14 +18,34 @@ def variance_inflation_factors(X):
     return np.asarray(result)
 
 
+def _vif_from_correlation(sub):
+    """VIF for every column of a (possibly singular) correlation matrix. Columns that are exactly dependent on the others
+    get infinity; the rest use the pseudo-inverse, which equals the regression-based VIF (checked against
+    variance_inflation_factors to 1e-11 on the original data sets)."""
+    w, V = np.linalg.eigh(sub)
+    null = w <= 1e-10 * w.max()
+    dependent = (V[:, null] ** 2).sum(axis=1) > 1e-8 if null.any() else np.zeros(len(sub), bool)
+    keep = ~null
+    vif = ((V[:, keep] ** 2) / w[keep]).sum(axis=1)
+    return np.where(dependent, np.inf, vif)
+
+
 class VIFCARTClassifier:
     def __init__(self, threshold=10.0, **tree_kwargs):
         self.threshold = threshold; self.tree_kwargs = tree_kwargs
 
     def fit(self, X, y):
         X = np.asarray(X, float); kept = list(range(X.shape[1])); self.dropped_features_ = []
+        # VIFs come from an eigen-decomposition of the correlation matrix (see _vif_from_correlation);
+        # variance_inflation_factors is the regression-based reference definition.
+        constant = X.std(axis=0) == 0
+        with np.errstate(invalid="ignore", divide="ignore"):
+            corr = np.nan_to_num(np.corrcoef(X, rowvar=False), nan=0.0)
+        np.fill_diagonal(corr, 1.0)
+        for c in [c for c in kept if constant[c]]:  # constant columns have infinite VIF and go first, in index order
+            kept.remove(c); self.dropped_features_.append(c)
         while len(kept) > 1:
-            vifs = variance_inflation_factors(X[:, kept])
+            vifs = _vif_from_correlation(corr[np.ix_(kept, kept)])
             worst = int(np.argmax(vifs))
             if vifs[worst] < self.threshold:
                 break

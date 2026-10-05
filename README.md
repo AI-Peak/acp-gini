@@ -29,11 +29,13 @@ python -m src.experiments.exp5_runtime
 python -m src.experiments.derive_group_metrics
 python -m src.experiments.exp6_real_sweep
 # Extended evidence (needs results/uci_main.csv; joblib-parallel, roughly 20 min each on 22 cores)
-python -m src.experiments.exp7_extended        # path/group metrics, nested alpha, Cluster+CART, RF reference
+python -m src.experiments.exp7_extended        # path/group metrics, nested alpha, Cluster+CART
 python -m src.experiments.exp8_depth_mechanism # depth sensitivity, correlation-band mass, top path pairs
 python -m src.experiments.exp9_ablation_full   # estimator/aggregation/scope ablation on all data sets
 python -m src.experiments.exp10_review_checks  # tree-global scope, Spearman/NMI redundancy, filter threshold sweeps
 python -m src.experiments.exp11_path_pairs     # pair-level provenance for the path correlation bands
+python -m src.experiments.exp12_scenarios      # controlled scenarios: redundant proxies (rho sweep) and conditional structure
+python -m src.experiments.exp13_alpha_tradeoff # accuracy, redundancy and stability as functions of alpha
 python -m src.experiments.analyze_stats        # Nadeau-Bengio tests, Holm, sign tests, nested-vs-CART
 python make_tables.py
 python make_tables_ext.py
@@ -41,7 +43,7 @@ python make_figures.py
 python make_figures_ext.py
 ```
 
-Data sets: WDBC, Wine Quality, Ionosphere, Sonar and Pima, plus three scikit-learn bundled sets (Diabetes, Cultivar, Digits38) that need no download. `exp3_uci` only re-runs the data sets named in `ACP_DATASETS` (for example `ACP_DATASETS=Diabetes,Cultivar,Digits38`) and merges them into `results/uci_main.csv`. `analyze_stats` also checks that `exp7_extended` reproduces `uci_main.csv` exactly for the four base methods.
+Data sets: WDBC, Wine Quality, Ionosphere, Sonar and Pima, three scikit-learn bundled sets (Diabetes, Cultivar, Digits38) that need no download, and four strongly collinear UCI sets (Parkinsons, Musk v1, Statlog Landsat, Ozone eight-hour task) that `src/datasets.py::load_strong` downloads once from the UCI repository and caches as CSV in `Data/`. `exp3_uci` is slow on the larger sets; to run data sets in parallel use `ACP_DATASETS=<name> ACP_PART=<name> python -m src.experiments.exp3_uci` once per set, then `python -m src.experiments.merge_parts`. `bash run_all_extended.sh` re-runs every analysis for all 12 data sets after the parts exist. `exp3_uci` only re-runs the data sets named in `ACP_DATASETS` (for example `ACP_DATASETS=Diabetes,Cultivar,Digits38`) and merges them into `results/uci_main.csv`. `analyze_stats` also checks that `exp7_extended` reproduces `uci_main.csv` exactly for the four base methods.
 
 The complete full experiment suite took approximately **35 wall-clock minutes** on the reference machine. Runtime is dominated by the inner-CV and bootstrap refits in `exp3_uci`; budget up to two hours on a slower CPU. All reported values originate in `results/*.csv`.
 

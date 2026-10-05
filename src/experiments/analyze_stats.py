@@ -39,7 +39,7 @@ def main():
     base = main_df[keys + UCI]
     on_base = ext[ext.method.isin(["CART", "VIF+CART", "RRF-style", "ACP-Gini"])][keys + EXT]
     both = base.merge(on_base, on=keys, how="left")
-    extra = ext[ext.method.isin(["ACP-Gini (nested)", "Cluster+CART", "RandomForest (reference)"])]
+    extra = ext[ext.method.isin(["ACP-Gini (nested)", "Cluster+CART"])]
     both = pd.concat([both, extra[keys + [c for c in UCI + EXT if c in extra.columns]]], ignore_index=True)
     # Reproducibility check: exp7 refits the four base methods and must match exp3 exactly.
     chk = ext[ext.method.isin(["CART", "VIF+CART", "RRF-style", "ACP-Gini"])].merge(base, on=keys, suffixes=("_x", ""))
